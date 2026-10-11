@@ -1,0 +1,52 @@
+stages:
+  - backend
+  - frontend
+  - deploy
+
+# 🖥 Backend (FastAPI)
+backend:
+  stage: backend
+  image: python:3.11
+  before_script:
+    - cd backend
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+  script:
+    - pytest   # run backend tests
+  artifacts:
+    paths:
+      - backend/__pycache__/
+    expire_in: 1 week
+
+# 🎨 Frontend (React)
+frontend:
+  stage: frontend
+  image: node:18
+  before_script:
+    - cd frontend
+    - npm install
+  script:
+    - npm run build   # build React app
+  artifacts:
+    paths:
+      - frontend/build/
+    expire_in: 1 week
+
+# 🚀 Deployment (example: Docker + Heroku/Kubernetes)
+deploy:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - echo "Starting deployment..."
+    # Example: build Docker images
+    - docker build -t codesentry-backend ./backend
+    - docker build -t codesentry-frontend ./frontend
+    # Push to registry (replace with your GitLab registry/project path)
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $CI_REGISTRY/codesentry/backend:latest
+    - docker push $CI_REGISTRY/codesentry/frontend:latest
+    # Add deployment commands (Heroku, Kubernetes, etc.)
+  only:
+    - main   # deploy only from main branch
